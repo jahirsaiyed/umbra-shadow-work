@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { CompanionView } from '@/components/companion/CompanionView'
 import { BadgeGrid } from '@/components/badges/BadgeGrid'
+import { signOut } from '@/app/(auth)/actions'
 import type { GrowthStage } from '@/lib/gamification/xp'
 
 export default async function DashboardPage() {
@@ -9,7 +11,7 @@ export default async function DashboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) redirect('/sign-in')
 
   const { data: companion } = await supabase
     .from('companion_state')
@@ -38,6 +40,11 @@ export default async function DashboardPage() {
         <Link href="/daily" className="rounded border border-stone-800 px-4 py-2">
           Today's check-in
         </Link>
+        <form action={signOut}>
+          <button type="submit" className="rounded border border-stone-800 px-4 py-2">
+            Sign out
+          </button>
+        </form>
       </div>
       <div>
         <h2 className="text-lg font-medium mb-4">Your badges</h2>
