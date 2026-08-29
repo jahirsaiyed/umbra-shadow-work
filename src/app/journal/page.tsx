@@ -34,7 +34,7 @@ export default async function JournalPage() {
     <main className="mx-auto max-w-2xl py-16 flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-serif mb-2">Your Journal</h1>
-        <p className="text-stone-600">A private record of what you've written along the way.</p>
+        <p className="text-stone-600">A private record of what you&apos;ve written along the way.</p>
       </div>
 
       {entries.length === 0 ? (
