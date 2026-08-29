@@ -3,6 +3,7 @@ import { containsCrisisLanguage } from './safety'
 import { calculateXpGain, growthStageForXp } from '../gamification/xp'
 import { updateStreakForActivity, type StreakState } from '../gamification/streak'
 import { determineNewBadges } from '../gamification/badges'
+import { getStage } from '../content/journey-stages'
 
 export interface SubmitJournalEntryInput {
   content: string
@@ -44,6 +45,50 @@ export async function submitJournalEntry(
   })
   if (insertError) throw insertError
 
+  // Record Journey lesson completion and figure out whether this submission just
+  // completed the whole stage. Daily Practice uses placeholder 'daily'/'daily-checkin'
+  // slugs that aren't real Journey content, so it's excluded from this entirely.
+  let completedStageSlug: string | null = null
+  if (input.activityType === 'lesson_exercise') {
+    const stage = getStage(input.stageSlug)
+    const lessonExists = stage?.lessons.some((lesson) => lesson.slug === input.lessonSlug) ?? false
+
+    if (stage && lessonExists) {
+      const { error: progressUpsertError } = await supabase.from('journey_progress').upsert(
+        {
+          user_id: userId,
+          stage_slug: input.stageSlug,
+          lesson_slug: input.lessonSlug,
+        },
+        { onConflict: 'user_id,stage_slug,lesson_slug', ignoreDuplicates: true }
+      )
+      if (progressUpsertError) {
+        console.error('Failed to record journey_progress during journal entry submission:', progressUpsertError, {
+          userId,
+          stageSlug: input.stageSlug,
+          lessonSlug: input.lessonSlug,
+        })
+      }
+
+      const { data: progressRows, error: progressSelectError } = await supabase
+        .from('journey_progress')
+        .select('lesson_slug')
+        .eq('user_id', userId)
+        .eq('stage_slug', input.stageSlug)
+      if (progressSelectError) {
+        console.error('Failed to load journey_progress during journal entry submission:', progressSelectError, {
+          userId,
+          stageSlug: input.stageSlug,
+        })
+      }
+
+      const completedLessonSlugs = new Set((progressRows ?? []).map((row: any) => row.lesson_slug))
+      if (completedLessonSlugs.size >= stage.lessons.length) {
+        completedStageSlug = input.stageSlug
+      }
+    }
+  }
+
   const { data: companion, error: companionSelectError } = await supabase
     .from('companion_state')
     .select('*')
@@ -83,7 +128,7 @@ export async function submitJournalEntry(
 
   const newBadges = determineNewBadges({
     isFirstJournalEntry: (existingEntryCount ?? 0) === 0,
-    completedStageSlug: null,
+    completedStageSlug,
     currentStreak: streakAfter.currentStreak,
   })
 
