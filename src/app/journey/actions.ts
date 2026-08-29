@@ -7,7 +7,8 @@ import { redirect } from 'next/navigation'
 export async function submitJournalEntryAction(
   stageSlug: string,
   lessonSlug: string,
-  content: string
+  content: string,
+  today: string
 ): Promise<SubmitJournalEntryResult> {
   const supabase = await createClient()
   const {
@@ -15,6 +16,5 @@ export async function submitJournalEntryAction(
   } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
 
-  const today = new Date().toISOString().slice(0, 10)
   return submitJournalEntry(supabase, user.id, { content, stageSlug, lessonSlug, activityType: 'lesson_exercise', today })
 }

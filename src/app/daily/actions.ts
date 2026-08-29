@@ -2,19 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { submitJournalEntry, type SubmitJournalEntryResult } from '@/lib/journal/submit-entry'
 import { redirect } from 'next/navigation'
 
-const DAILY_PROMPTS = [
-  'What emotion showed up most today, and where did you feel it in your body?',
-  'Did anything today provoke a reaction bigger than the moment called for?',
-  "What's one thing you did today that you'd rather not admit to?",
-  'Who did you compare yourself to today, and what did that comparison reveal?',
-]
+// Re-exported from the shared, server-import-free module so client components
+// (DailyCheckInForm) can compute the prompt for the user's local day without
+// pulling this file's server-only imports (cookies, etc.) into the client bundle.
+export { getTodaysPrompt } from '@/lib/daily-prompt'
 
-export function getTodaysPrompt(dateSeed: string): string {
-  const index = Array.from(dateSeed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % DAILY_PROMPTS.length
-  return DAILY_PROMPTS[index]
-}
-
-export async function submitDailyCheckInAction(content: string): Promise<SubmitJournalEntryResult> {
+export async function submitDailyCheckInAction(content: string, today: string): Promise<SubmitJournalEntryResult> {
   'use server'
 
   const supabase = await createClient()
@@ -23,7 +16,6 @@ export async function submitDailyCheckInAction(content: string): Promise<SubmitJ
   } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
 
-  const today = new Date().toISOString().slice(0, 10)
   return submitJournalEntry(supabase, user.id, {
     content,
     stageSlug: 'daily',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { SubmitJournalEntryResult } from '@/lib/journal/submit-entry'
+import { getLocalDateString } from '@/lib/date'
 
 export function ExerciseForm({
   stageSlug,
@@ -10,7 +11,7 @@ export function ExerciseForm({
 }: {
   stageSlug: string
   lessonSlug: string
-  onSubmit: (stageSlug: string, lessonSlug: string, content: string) => Promise<SubmitJournalEntryResult>
+  onSubmit: (stageSlug: string, lessonSlug: string, content: string, today: string) => Promise<SubmitJournalEntryResult>
 }) {
   const [content, setContent] = useState('')
   const [result, setResult] = useState<SubmitJournalEntryResult | null>(null)
@@ -22,7 +23,8 @@ export function ExerciseForm({
     setSaving(true)
     setError(null)
     try {
-      const outcome = await onSubmit(stageSlug, lessonSlug, content)
+      const today = getLocalDateString(new Date())
+      const outcome = await onSubmit(stageSlug, lessonSlug, content, today)
       setResult(outcome)
     } catch {
       setError("We couldn't save that just now. Your words are still here — please try again.")

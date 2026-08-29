@@ -19,9 +19,9 @@ export default async function LessonPage({
   const lesson = getLesson(stageSlug, lessonSlug)
   if (!lesson) notFound()
 
-  async function onSubmit(stage: string, slug: string, content: string) {
+  async function onSubmit(stage: string, slug: string, content: string, today: string) {
     'use server'
-    return submitJournalEntryAction(stage, slug, content)
+    return submitJournalEntryAction(stage, slug, content, today)
   }
 
   return (
