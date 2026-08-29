@@ -12,13 +12,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Phase 1 is light-mode only by design (calm, considered reading experience).
+   Deliberately no `prefers-color-scheme: dark` override here — the rest of the
+   app uses light-only text colors (e.g. stone-600/700), so following the OS/
+   browser dark preference would silently break contrast. A real dark theme is
+   a future design pass, not a quick CSS toggle. */
 body {
   background: var(--background);
   color: var(--foreground);
