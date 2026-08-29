@@ -1,7 +1,15 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { JOURNEY_STAGES } from '@/lib/content/journey-stages'
 
-export default function JourneyPage() {
+export default async function JourneyPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/sign-in')
+
   return (
     <main className="mx-auto max-w-2xl py-16">
       <h1 className="text-2xl font-serif mb-8">The Journey</h1>

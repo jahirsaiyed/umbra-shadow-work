@@ -1,7 +1,15 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { getTodaysPrompt, submitDailyCheckInAction } from './actions'
 import { DailyCheckInForm } from './DailyCheckInForm'
 
-export default function DailyPage() {
+export default async function DailyPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/sign-in')
+
   const today = new Date().toISOString().slice(0, 10)
   const prompt = getTodaysPrompt(today)
 

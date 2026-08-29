@@ -1,4 +1,5 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { getLesson } from '@/lib/content/journey-stages'
 import { submitJournalEntryAction } from '../../actions'
 import { ExerciseForm } from './ExerciseForm'
@@ -8,6 +9,12 @@ export default async function LessonPage({
 }: {
   params: Promise<{ stageSlug: string; lessonSlug: string }>
 }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/sign-in')
+
   const { stageSlug, lessonSlug } = await params
   const lesson = getLesson(stageSlug, lessonSlug)
   if (!lesson) notFound()

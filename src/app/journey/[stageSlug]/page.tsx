@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getStage } from '@/lib/content/journey-stages'
 import { createClient } from '@/lib/supabase/server'
 
@@ -8,25 +8,21 @@ export default async function StagePage({ params }: { params: Promise<{ stageSlu
   const stage = getStage(stageSlug)
   if (!stage) notFound()
 
-  // This page has no auth guard (Journey content is browsable while signed out);
-  // only signed-in visitors have any journey_progress rows to show.
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  if (!user) redirect('/sign-in')
 
-  let completedLessonSlugs = new Set<string>()
-  if (user) {
-    const { data: progressRows, error: progressError } = await supabase
-      .from('journey_progress')
-      .select('lesson_slug')
-      .eq('user_id', user.id)
-      .eq('stage_slug', stage.slug)
-    if (progressError) {
-      console.error('Failed to load journey_progress for stage page:', progressError, { userId: user.id, stageSlug: stage.slug })
-    }
-    completedLessonSlugs = new Set((progressRows ?? []).map((row: any) => row.lesson_slug))
+  const { data: progressRows, error: progressError } = await supabase
+    .from('journey_progress')
+    .select('lesson_slug')
+    .eq('user_id', user.id)
+    .eq('stage_slug', stage.slug)
+  if (progressError) {
+    console.error('Failed to load journey_progress for stage page:', progressError, { userId: user.id, stageSlug: stage.slug })
   }
+  const completedLessonSlugs = new Set((progressRows ?? []).map((row: any) => row.lesson_slug))
 
   return (
     <main className="mx-auto max-w-2xl py-16">
