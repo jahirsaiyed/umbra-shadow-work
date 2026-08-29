@@ -309,7 +309,23 @@ import('pg').then(async ({ Client }) => {
 ```
 Expected output includes: `badges, companion_state, journal_entries, journey_progress, profiles, user_badges`
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Confirm the tables are reachable through the Data API (not just via direct Postgres connection)**
+
+New tables are usually auto-exposed to PostgREST when created in `public` on a default-configured project, but this isn't guaranteed — check via the Vercel-Supabase integration guide:
+```bash
+vercel integration guide supabase --framework nextjs
+```
+If a quick REST check is wanted, hit the REST endpoint directly (should return `401`/`403`, not `404`, proving the table is known to PostgREST even though no auth token was sent):
+```bash
+npx dotenv -e .env.local -- node -e "
+fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/badges', {
+  headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY }
+}).then(async (r) => console.log(r.status, await r.text()))
+"
+```
+Expected: HTTP 200 with the 5 seeded badge rows as JSON (the `badges` table has a public `select` policy, so an anon-keyed request should succeed outright). If this instead 404s, the table isn't exposed to the Data API yet — check the project's Data API settings in the Supabase dashboard (Project Settings → Data API → Exposed schemas) and ensure `public` is listed before continuing to Task 3.
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations/0001_init.sql scripts/run-migration.mjs package.json package-lock.json
