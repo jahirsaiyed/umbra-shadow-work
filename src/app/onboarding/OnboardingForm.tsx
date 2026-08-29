@@ -59,7 +59,7 @@ export function OnboardingForm({ action }: { action: (formData: FormData) => voi
       </fieldset>
 
       <fieldset>
-        <legend className="font-medium mb-2">What's drawing you in right now?</legend>
+        <legend className="font-medium mb-2">What&apos;s drawing you in right now?</legend>
         {[
           { value: 'relationship_pattern', label: 'A relationship pattern' },
           { value: 'self_criticism', label: 'Self-criticism' },

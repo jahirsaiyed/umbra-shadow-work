@@ -30,7 +30,13 @@ export default async function DashboardPage() {
     console.error('Failed to load user_badges for dashboard:', badgesError, { userId: user.id })
   }
 
-  const badges = (earnedBadges ?? []).map((row: any) => row.badges)
+  // `badges(...)` is a to-one embed (user_badges.badge_id -> badges.id), but
+  // supabase-js's string-literal type inference can't know that without
+  // generated Database types, so it conservatively types it as an array.
+  // flatMap handles both shapes correctly: it flattens an array of badges per
+  // row, and passes a single badge object through unchanged (matching either
+  // possible runtime shape) while still producing EarnedBadge[] for the type checker.
+  const badges = (earnedBadges ?? []).flatMap((row) => row.badges)
 
   return (
     <main className="mx-auto max-w-2xl py-16 flex flex-col gap-8">
@@ -44,7 +50,7 @@ export default async function DashboardPage() {
           Continue the Journey
         </Link>
         <Link href="/daily" className="rounded border border-stone-800 px-4 py-2">
-          Today's check-in
+          Today&apos;s check-in
         </Link>
         <Link href="/journal" className="rounded border border-stone-800 px-4 py-2">
           Your journal

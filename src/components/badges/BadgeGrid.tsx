@@ -6,7 +6,7 @@ interface EarnedBadge {
 
 export function BadgeGrid({ badges }: { badges: EarnedBadge[] }) {
   if (badges.length === 0) {
-    return <p className="text-stone-600">No badges yet — they'll appear here as you go.</p>
+    return <p className="text-stone-600">No badges yet — they&apos;ll appear here as you go.</p>
   }
   return (
     <ul className="grid grid-cols-2 gap-4">

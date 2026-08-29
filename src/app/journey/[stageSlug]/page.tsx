@@ -22,7 +22,7 @@ export default async function StagePage({ params }: { params: Promise<{ stageSlu
   if (progressError) {
     console.error('Failed to load journey_progress for stage page:', progressError, { userId: user.id, stageSlug: stage.slug })
   }
-  const completedLessonSlugs = new Set((progressRows ?? []).map((row: any) => row.lesson_slug))
+  const completedLessonSlugs = new Set((progressRows ?? []).map((row) => row.lesson_slug))
 
   return (
     <main className="mx-auto max-w-2xl py-16">

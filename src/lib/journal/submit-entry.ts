@@ -22,6 +22,7 @@ export interface SubmitJournalEntryResult {
 // `supabase` is typed loosely on purpose: the fake client in submit-entry.test.ts
 // only implements the subset of the real SupabaseClient this function calls.
 export async function submitJournalEntry(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   userId: string,
   input: SubmitJournalEntryInput
@@ -82,6 +83,9 @@ export async function submitJournalEntry(
         })
       }
 
+      // `row` can't be inferred here because it flows through the intentionally
+      // untyped `supabase: any` parameter (see the comment above this function).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const completedLessonSlugs = new Set((progressRows ?? []).map((row: any) => row.lesson_slug))
       if (completedLessonSlugs.size >= stage.lessons.length) {
         completedStageSlug = input.stageSlug

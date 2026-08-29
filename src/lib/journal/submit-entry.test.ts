@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+﻿import { describe, it, expect, beforeAll } from 'vitest'
 import { submitJournalEntry } from './submit-entry'
 
 beforeAll(() => {
@@ -10,6 +10,11 @@ function createFakeSupabase(opts: {
   companion?: { xp: number; current_streak: number; longest_streak: number; streak_freezes_remaining: number; last_activity_date: string | null } | null
   existingProgress?: { stageSlug: string; lessonSlug: string }[]
 }) {
+  // The fake client's call log is loosely typed on purpose: it needs to accept
+  // whatever shape each Supabase table's insert/upsert call happens to pass
+  // (see the `supabase: any` note in submit-entry.ts), and modeling that
+  // precisely per-table isn't worth it for test-only code.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const calls: { insert: any[]; upsert: any[] } = { insert: [], upsert: [] }
   const progress = [...(opts.existingProgress ?? [])]
   const client = {
@@ -24,7 +29,7 @@ function createFakeSupabase(opts: {
           }
           if (table === 'journey_progress') {
             return {
-              eq: (_col1: string, _userId: string) => ({
+              eq: () => ({
                 eq: (_col2: string, stageSlug: string) =>
                   Promise.resolve({
                     data: progress
@@ -37,10 +42,13 @@ function createFakeSupabase(opts: {
           }
           throw new Error(`Unexpected select on ${table}`)
         },
+        // See the disable-comment on `calls` above for why these stay loosely typed.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         insert(row: any) {
           calls.insert.push({ table, row })
           return Promise.resolve({ error: null })
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         upsert(rows: any, upsertOpts?: any) {
           calls.upsert.push({ table, rows, opts: upsertOpts })
           if (table === 'journey_progress') {
@@ -64,7 +72,7 @@ describe('submitJournalEntry', () => {
   it('encrypts content, awards XP, and grants the first-entry badge on a brand-new user', async () => {
     const { client, calls } = createFakeSupabase({ existingEntryCount: 0, companion: null })
 
-    const result = await submitJournalEntry(client as any, 'user-1', {
+    const result = await submitJournalEntry(client, 'user-1', {
       content: 'Today I noticed I got defensive when my coworker gave feedback.',
       stageSlug: 'recognition',
       lessonSlug: 'noticing-triggers',
@@ -92,7 +100,7 @@ describe('submitJournalEntry', () => {
       companion: { xp: 40, current_streak: 1, longest_streak: 1, streak_freezes_remaining: 3, last_activity_date: '2026-08-28' },
     })
 
-    const result = await submitJournalEntry(client as any, 'user-1', {
+    const result = await submitJournalEntry(client, 'user-1', {
       content: "I don't want to be here anymore.",
       stageSlug: 'recognition',
       lessonSlug: 'noticing-triggers',
@@ -111,7 +119,7 @@ describe('submitJournalEntry', () => {
       companion: { xp: 60, current_streak: 2, longest_streak: 2, streak_freezes_remaining: 3, last_activity_date: '2026-08-28' },
     })
 
-    const result = await submitJournalEntry(client as any, 'user-1', {
+    const result = await submitJournalEntry(client, 'user-1', {
       content: 'A calm, ordinary reflection.',
       stageSlug: 'acceptance',
       lessonSlug: 'naming-without-judgment',
@@ -128,7 +136,7 @@ describe('submitJournalEntry', () => {
       companion: { xp: 20, current_streak: 1, longest_streak: 1, streak_freezes_remaining: 3, last_activity_date: '2026-08-28' },
     })
 
-    await submitJournalEntry(client as any, 'user-1', {
+    await submitJournalEntry(client, 'user-1', {
       content: 'A short daily reflection.',
       stageSlug: 'daily',
       lessonSlug: 'daily-checkin',
@@ -147,7 +155,7 @@ describe('submitJournalEntry', () => {
       existingProgress: [{ stageSlug: 'recognition', lessonSlug: 'noticing-triggers' }],
     })
 
-    const result = await submitJournalEntry(client as any, 'user-1', {
+    const result = await submitJournalEntry(client, 'user-1', {
       content: 'Reflecting on what I admire and despise in others.',
       stageSlug: 'recognition',
       lessonSlug: 'projection-journaling',
@@ -172,7 +180,7 @@ describe('submitJournalEntry', () => {
       existingProgress: [],
     })
 
-    const result = await submitJournalEntry(client as any, 'user-1', {
+    const result = await submitJournalEntry(client, 'user-1', {
       content: 'Noticing a trigger from earlier today.',
       stageSlug: 'recognition',
       lessonSlug: 'noticing-triggers',
@@ -193,7 +201,7 @@ describe('submitJournalEntry', () => {
       ],
     })
 
-    const result = await submitJournalEntry(client as any, 'user-1', {
+    const result = await submitJournalEntry(client, 'user-1', {
       content: 'A short daily reflection.',
       stageSlug: 'daily',
       lessonSlug: 'daily-checkin',
