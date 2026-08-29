@@ -15,14 +15,23 @@ export function ExerciseForm({
   const [content, setContent] = useState('')
   const [result, setResult] = useState<SubmitJournalEntryResult | null>(null)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const outcome = await onSubmit(stageSlug, lessonSlug, content)
-    setResult(outcome)
-    setSaving(false)
+    setError(null)
+    try {
+      const outcome = await onSubmit(stageSlug, lessonSlug, content)
+      setResult(outcome)
+    } catch {
+      setError("We couldn't save that just now. Your words are still here — please try again.")
+    } finally {
+      setSaving(false)
+    }
   }
+
+  const saved = result !== null
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -33,9 +42,19 @@ export function ExerciseForm({
         className="border rounded p-3"
         placeholder="Write freely — there's no wrong answer here."
       />
-      <button type="submit" disabled={saving || content.trim().length === 0} className="self-start rounded bg-stone-800 text-white px-4 py-2 disabled:opacity-40">
+      <button
+        type="submit"
+        disabled={saving || saved || content.trim().length === 0}
+        className="self-start rounded bg-stone-800 text-white px-4 py-2 disabled:opacity-40"
+      >
         Save entry
       </button>
+
+      {error && (
+        <div className="mt-4 rounded border border-stone-200 bg-stone-50 p-4">
+          <p className="text-stone-700">{error}</p>
+        </div>
+      )}
 
       {result && (
         <div className="mt-4 rounded border border-stone-200 bg-stone-50 p-4">

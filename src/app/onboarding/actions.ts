@@ -18,7 +18,10 @@ export async function saveOnboardingProfile(formData: FormData) {
   })
   if (error) redirect(`/onboarding?error=${encodeURIComponent(error.message)}`)
 
-  await supabase.from('companion_state').upsert({ user_id: user.id })
+  const { error: companionStateError } = await supabase.from('companion_state').upsert({ user_id: user.id })
+  if (companionStateError) {
+    console.error('Failed to initialize companion_state during onboarding:', companionStateError, { userId: user.id })
+  }
 
   redirect('/journey')
 }

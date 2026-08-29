@@ -44,11 +44,16 @@ export async function submitJournalEntry(
   })
   if (insertError) throw insertError
 
-  const { data: companion } = await supabase
+  const { data: companion, error: companionSelectError } = await supabase
     .from('companion_state')
     .select('*')
     .eq('user_id', userId)
     .single()
+  if (companionSelectError) {
+    console.error('Failed to load companion_state during journal entry submission:', companionSelectError, {
+      userId,
+    })
+  }
 
   const streakBefore: StreakState = {
     currentStreak: companion?.current_streak ?? 0,
@@ -61,7 +66,7 @@ export async function submitJournalEntry(
   const newXp = (companion?.xp ?? 0) + calculateXpGain(input.activityType)
   const growthStage = growthStageForXp(newXp)
 
-  await supabase.from('companion_state').upsert({
+  const { error: companionUpsertError } = await supabase.from('companion_state').upsert({
     user_id: userId,
     xp: newXp,
     growth_stage: growthStage,
@@ -70,6 +75,11 @@ export async function submitJournalEntry(
     streak_freezes_remaining: streakAfter.freezesRemaining,
     last_activity_date: input.today,
   })
+  if (companionUpsertError) {
+    console.error('Failed to update companion_state during journal entry submission:', companionUpsertError, {
+      userId,
+    })
+  }
 
   const newBadges = determineNewBadges({
     isFirstJournalEntry: (existingEntryCount ?? 0) === 0,
@@ -78,12 +88,18 @@ export async function submitJournalEntry(
   })
 
   if (newBadges.length > 0) {
-    await supabase
+    const { error: badgesUpsertError } = await supabase
       .from('user_badges')
       .upsert(
         newBadges.map((badgeId) => ({ user_id: userId, badge_id: badgeId })),
         { onConflict: 'user_id,badge_id', ignoreDuplicates: true }
       )
+    if (badgesUpsertError) {
+      console.error('Failed to award badges during journal entry submission:', badgesUpsertError, {
+        userId,
+        newBadges,
+      })
+    }
   }
 
   return { safetyFlagged, newBadges, growthStage }

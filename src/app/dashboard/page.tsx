@@ -13,16 +13,22 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
 
-  const { data: companion } = await supabase
+  const { data: companion, error: companionError } = await supabase
     .from('companion_state')
     .select('growth_stage, current_streak')
     .eq('user_id', user.id)
     .single()
+  if (companionError) {
+    console.error('Failed to load companion_state for dashboard:', companionError, { userId: user.id })
+  }
 
-  const { data: earnedBadges } = await supabase
+  const { data: earnedBadges, error: badgesError } = await supabase
     .from('user_badges')
     .select('badges(id, name, description)')
     .eq('user_id', user.id)
+  if (badgesError) {
+    console.error('Failed to load user_badges for dashboard:', badgesError, { userId: user.id })
+  }
 
   const badges = (earnedBadges ?? []).map((row: any) => row.badges)
 
