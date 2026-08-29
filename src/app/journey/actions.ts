@@ -16,5 +16,5 @@ export async function submitJournalEntryAction(
   if (!user) redirect('/sign-in')
 
   const today = new Date().toISOString().slice(0, 10)
-  return submitJournalEntry(supabase, user.id, { content, stageSlug, lessonSlug, today })
+  return submitJournalEntry(supabase, user.id, { content, stageSlug, lessonSlug, activityType: 'lesson_exercise', today })
 }

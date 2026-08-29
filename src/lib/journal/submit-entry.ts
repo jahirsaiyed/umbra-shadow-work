@@ -8,6 +8,7 @@ export interface SubmitJournalEntryInput {
   content: string
   stageSlug: string
   lessonSlug: string
+  activityType: 'lesson_exercise' | 'daily_practice'
   today: string // 'YYYY-MM-DD', injected so this stays pure and testable
 }
 
@@ -57,7 +58,7 @@ export async function submitJournalEntry(
   }
   const streakAfter = updateStreakForActivity(streakBefore, input.today)
 
-  const newXp = (companion?.xp ?? 0) + calculateXpGain('lesson_exercise')
+  const newXp = (companion?.xp ?? 0) + calculateXpGain(input.activityType)
   const growthStage = growthStageForXp(newXp)
 
   await supabase.from('companion_state').upsert({

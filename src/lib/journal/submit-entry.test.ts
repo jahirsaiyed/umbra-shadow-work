@@ -44,6 +44,7 @@ describe('submitJournalEntry', () => {
       content: 'Today I noticed I got defensive when my coworker gave feedback.',
       stageSlug: 'recognition',
       lessonSlug: 'noticing-triggers',
+      activityType: 'lesson_exercise',
       today: '2026-08-29',
     })
 
@@ -71,6 +72,7 @@ describe('submitJournalEntry', () => {
       content: "I don't want to be here anymore.",
       stageSlug: 'recognition',
       lessonSlug: 'noticing-triggers',
+      activityType: 'lesson_exercise',
       today: '2026-08-29',
     })
 
@@ -89,9 +91,28 @@ describe('submitJournalEntry', () => {
       content: 'A calm, ordinary reflection.',
       stageSlug: 'acceptance',
       lessonSlug: 'naming-without-judgment',
+      activityType: 'lesson_exercise',
       today: '2026-08-29',
     })
 
     expect(result.newBadges).not.toContain('first-entry')
+  })
+
+  it('awards the smaller daily-practice XP amount for a daily check-in', async () => {
+    const { client, calls } = createFakeSupabase({
+      existingEntryCount: 1,
+      companion: { xp: 20, current_streak: 1, longest_streak: 1, streak_freezes_remaining: 3, last_activity_date: '2026-08-28' },
+    })
+
+    await submitJournalEntry(client as any, 'user-1', {
+      content: 'A short daily reflection.',
+      stageSlug: 'daily',
+      lessonSlug: 'daily-checkin',
+      activityType: 'daily_practice',
+      today: '2026-08-29',
+    })
+
+    const companionUpsert = calls.upsert.find((c) => c.table === 'companion_state')
+    expect(companionUpsert.rows.xp).toBe(30) // 20 existing + 10 for daily_practice
   })
 })
