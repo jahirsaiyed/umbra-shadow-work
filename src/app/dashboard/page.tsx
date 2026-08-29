@@ -46,6 +46,9 @@ export default async function DashboardPage() {
         <Link href="/daily" className="rounded border border-stone-800 px-4 py-2">
           Today's check-in
         </Link>
+        <Link href="/journal" className="rounded border border-stone-800 px-4 py-2">
+          Your journal
+        </Link>
         <form action={signOut}>
           <button type="submit" className="rounded border border-stone-800 px-4 py-2">
             Sign out
